@@ -147,6 +147,24 @@ namespace TermRewritingV2
 
             while (_identities.Any() || _rules.Any(r => !r.IsMarked))
             {
+                Log(" ------------------------------ ");
+                Log("Starting outer loop with:");
+                Log("    * Identities:");
+                if (!_identities.Any())
+                    Log("    none");
+                else
+                {
+                    foreach (var id in _identities)
+                        Log($"    {id}", id.Left, id.Right);
+                }
+              Log("    * Rules:");
+                if (!_rules.Any())
+                    Log("    none");
+                else
+                {
+                    foreach (var rule in _rules)
+                        Log($"    {rule}", rule.Left, rule.Right);
+                }
                 while (_identities.Any())
                 {
                     var identity = _identities.OrderBy(id => id.Left.Size + id.Right.Size).First();
@@ -217,13 +235,12 @@ namespace TermRewritingV2
                         Log($"Added {id} to the set of identities", cp.Left, cp.Right);
                     }
                 }
-                else if (_rules.All(x => x.IsMarked))
+                else
                 {
-                    Log("No critical pair found .. STOP", null, null);
-                    if (!_identities.Any())
-                        break;
+                    Log("No critical pair found .. ");
                 }
             }
+            Log("Stopping since there the set of identities is empty and there are no unmarked rules.");
         }
 
         private List<Pair> FindCriticalPairs()
@@ -241,6 +258,8 @@ namespace TermRewritingV2
             var pairs = _rules
                 .Where(r => r.IsMarked).Append(rule)
                 .Select(r => DistinctVariables(r, rule)).ToList();
+
+            Log($"Looking for critical pairs using rule {rule}", rule.Left, rule.Right);
 
             foreach (var (rule1, rule2) in pairs)
             {
@@ -288,9 +307,13 @@ namespace TermRewritingV2
                     Log($"    From rules {result.other.rule1}", result.other.rule1.Left, result.other.rule1.Right);
                     Log($"           And {result.other.rule2}", result.other.rule2.Left, result.other.rule2.Right);
                     Log($"           MGU = {result.mgu}", result.other.rule1.Left, null);
-                    Log($"Marked rule {result.rule}", result.rule.Left, result.rule.Right);
                     results.Add(result.pair);
                 }
+            }
+
+            if (!allPairs.Any())
+            {
+                Log($"No critical pairs found using rule {rule}", rule.Left, rule.Right);
             }
 
             Log($"Marked rule {rule}", rule.Left, rule.Right);
@@ -333,14 +356,14 @@ namespace TermRewritingV2
                 .ToList();
         }
 
-        private bool Unify(Term term1, Term term2, out List<Pair> mgu)
+        private bool Unify(Term term1, Term term2, out List<Unifier> mgu)
         {
             mgu = null;
             var t1 = Term.Clone(term1);
             var t2 = Term.Clone(term2);
 
             var change = false;
-            var pairs = new List<Pair> { new Pair(t1, t2) };
+            var pairs = new List<Unifier> { new Unifier(t1, t2) };
 
             do
             {
@@ -352,7 +375,7 @@ namespace TermRewritingV2
                     if (!left.IsVariable && right.IsVariable)
                     {
                         pairs.Remove(pair);
-                        pairs.Add(new Pair(right, left));
+                        pairs.Add(new Unifier(right, left));
                         change = true;
                         break;
                     }
@@ -363,7 +386,7 @@ namespace TermRewritingV2
                             return false;
 
                         var add = left.Children
-                            .Zip(right.Children, (l, r) => r.IsVariable && !l.IsVariable ? new Pair(r, l) : new Pair(l, r))
+                            .Zip(right.Children, (l, r) => r.IsVariable && !l.IsVariable ? new Unifier(r, l) : new Unifier(l, r))
                             .Where(x => x.Left != x.Right);
                         pairs.AddRange(add);
 
@@ -459,6 +482,12 @@ namespace TermRewritingV2
             }
             return smallest.pair;
         }
+
+        private Term PerformSubstitutions(Term t, List<Unifier> substitutions)
+        {
+            return PerformSubstitutions(t, substitutions.Cast<Pair>().ToList());
+        }
+
 
         private Term PerformSubstitutions(Term t, List<Pair> substitutions)
         {
@@ -602,7 +631,7 @@ namespace TermRewritingV2
             return true;
         }
 
-        private void Log(string what, Term t, Term u) => History.Save(what, t, u);
+        private void Log(string what, Term t = null, Term u = null) => History.Save(what, t, u);
 
         private Rule Compare(Term left, Term right)
         {
@@ -634,6 +663,12 @@ namespace TermRewritingV2
             protected virtual string Symbol => ",";
         }
 
+        private class Unifier : Pair
+        {
+            public Unifier(Term left, Term right) : base(left, right) { }
+            protected override string Symbol => "→";
+        }
+
         private class Identity : Pair
         {
             public Identity(Term left, Term right) : base(left, right) { }
@@ -646,7 +681,7 @@ namespace TermRewritingV2
             protected override string Symbol => "→";
             public bool IsMarked { get; set; }
             public override string ToString()
-                => $"{Left.ToString()} {Symbol} {Right.ToString()} {(IsMarked ? "*" : "")}";
+                => $"{base.ToString()} {(IsMarked ? "*" : "")}";
 
         }
     }

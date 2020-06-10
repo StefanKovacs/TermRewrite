@@ -102,10 +102,9 @@ namespace TermForms
 
         private void completeButton_Click(object sender, EventArgs e)
         {
-                _system.CompleteNaive();
             try
             {
-
+                _system.CompleteHuet();
             }
             catch (Exception ex)
             {
