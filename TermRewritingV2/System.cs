@@ -27,7 +27,9 @@ namespace TermRewritingV2
                 .ToList();
 
             Init712();
+          //  InitOrt();
         }
+
         private void Init712()
         {
             AddIdentity("f(f(x,y),z) = f(x,f(y,z))");
@@ -263,7 +265,7 @@ namespace TermRewritingV2
 
             foreach (var (rule1, rule2) in pairs)
             {
-                var lPos = rule1.Left.Positions().Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
+                var lPos = rule1.Left.Positions.Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
                 foreach (var pos in lPos)
                 {
                     if (Unify(pos.Value, rule2.Left, out var mgu))
@@ -280,7 +282,7 @@ namespace TermRewritingV2
                         }
                     }
                 }
-                var rPos = rule2.Left.Positions().Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
+                var rPos = rule2.Left.Positions.Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
                 foreach (var pos in rPos)
                 {
                     if (Unify(pos.Value, rule1.Left, out var mgu))
@@ -325,7 +327,7 @@ namespace TermRewritingV2
         {
             var results = new List<Term>();
 
-            var matchingPositions = term.Positions()
+            var matchingPositions = term.Positions
                     .OrderByDescending(x => int.TryParse(x.Key, out var k) ? k : 0)
                     .Where(p => !p.Value.IsVariable)
                     .SelectMany(pos => rules.Select(
@@ -431,7 +433,7 @@ namespace TermRewritingV2
 
                 foreach (var (rule1, rule2) in pairs)
                 {
-                    var lPos = rule1.Left.Positions().Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
+                    var lPos = rule1.Left.Positions.Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
                     foreach (var pos in lPos)
                     {
                         if (Unify(pos.Value, rule2.Left, out var mgu))
@@ -449,7 +451,7 @@ namespace TermRewritingV2
                             }
                         }
                     }
-                    var rPos = rule2.Left.Positions().Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
+                    var rPos = rule2.Left.Positions.Where(x => !x.Value.IsVariable && !string.IsNullOrEmpty(x.Key)).ToList();
                     foreach (var pos in rPos)
                     {
                         if (Unify(pos.Value, rule1.Left, out var mgu))
@@ -492,7 +494,7 @@ namespace TermRewritingV2
         private Term PerformSubstitutions(Term t, List<Pair> substitutions)
         {
             var result = Term.Clone(t);
-            var targets = result.Positions().Where(x => x.Value.IsVariable)
+            var targets = result.Positions.Where(x => x.Value.IsVariable)
                 .Join(substitutions,
                     pos => pos.Value.Definition.Name,
                     sub => sub.Left.Definition.Name,
@@ -513,7 +515,7 @@ namespace TermRewritingV2
             {
                 SuffixVariables(clones[i], i.ToString());
             }
-            map = clones.Select((t, i) => t.Positions().Where(x => x.Value.IsVariable)
+            map = clones.Select((t, i) => t.Positions.Where(x => x.Value.IsVariable)
                 .GroupBy(x => x.Value.Definition.Name)
                 .Select(x => x.First())
                 .Select(x => new Pair(Term.Parse(Definitions, x.Value.Definition.Name), Term.Parse(Definitions, terms[i][x.Key].Definition.Name))).ToList())
@@ -595,7 +597,7 @@ namespace TermRewritingV2
             do
             {
                 done = true;
-                foreach (var pos in new Dictionary<string, Term>(pattern.Positions()))
+                foreach (var pos in new Dictionary<string, Term>(pattern.Positions))
                 {
                     var targetPos = target[pos.Key];
 
@@ -644,46 +646,7 @@ namespace TermRewritingV2
             return null;
         }
 
-        private class Pair
-        {
-            public Term Left { get; protected set; }
-            public Term Right { get; protected set; }
-            public void Deconstruct(out Term left, out Term right)
-            {
-                left = Left;
-                right = Right;
-            }
-            public Pair(Term left, Term right)
-            {
-                Left = left;
-                Right = right;
-            }
-            public override string ToString()
-             => $"{Left.ToString()} {Symbol} {Right.ToString()}";
-            protected virtual string Symbol => ",";
-        }
-
-        private class Unifier : Pair
-        {
-            public Unifier(Term left, Term right) : base(left, right) { }
-            protected override string Symbol => "→";
-        }
-
-        private class Identity : Pair
-        {
-            public Identity(Term left, Term right) : base(left, right) { }
-            protected override string Symbol => "≈";
-        }
-
-        private class Rule : Pair
-        {
-            public Rule(Term left, Term right) : base(left, right) { }
-            protected override string Symbol => "→";
-            public bool IsMarked { get; set; }
-            public override string ToString()
-                => $"{base.ToString()} {(IsMarked ? "*" : "")}";
-
-        }
+        
     }
 
     public interface IRewriteSystem

@@ -1,6 +1,6 @@
 ﻿namespace TermForms
 {
-    partial class Form1
+    partial class Termination
     {
         /// <summary>
         /// Required designer variable.
@@ -166,7 +166,7 @@
             this.previewRight.Size = new System.Drawing.Size(366, 765);
             this.previewRight.TabIndex = 21;
             // 
-            // Form1
+            // Termination
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -184,8 +184,8 @@
             this.Controls.Add(this.TermInput);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.SignaturesInput);
-            this.Name = "Form1";
-            this.Text = "Form1";
+            this.Name = "Termination";
+            this.Text = "Termination";
             this.ResumeLayout(false);
             this.PerformLayout();
 

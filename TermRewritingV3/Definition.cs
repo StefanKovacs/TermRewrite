@@ -1,9 +1,9 @@
-﻿namespace TermRewritingV2
+﻿namespace TermRewritingV3
 {
     public class Definition
     {
-        private static int FunctionIndex = 0;
-        private static int VariableIndex = 0;
+        private static int _functionIndex = 0;
+        private static int _variableIndex = 0;
 
         public int Order { get; }
         public string Name { get; private set; }
@@ -17,16 +17,23 @@
             Name = name;
             Arity = arity;
             Type = type == TermType.Function && arity == 0 ? TermType.Constant : type;
-            Order = type == TermType.Function ? FunctionIndex++ : VariableIndex++;
+            Order = type == TermType.Function ? _functionIndex++ : _variableIndex++;
         }
 
         public override string ToString()
             => $"[{Type}] {Name} / {Arity}";
 
         public static Definition Function(string name, uint arity)
-         => new Definition(name, arity, TermType.Function);
+            => new Definition(name, arity, TermType.Function);
 
         public static Definition Variable(string name)
-         => new Definition(name, 0, TermType.Variable);
+            => new Definition(name, 0, TermType.Variable);
+    }
+
+    public enum TermType
+    {
+        Function,
+        Constant,
+        Variable
     }
 }

@@ -48,16 +48,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.cs">
+    <Compile Include="Termination.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Termination.Designer.cs">
+      <DependentUpon>Termination.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Unification.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Unification.Designer.cs">
+      <DependentUpon>Unification.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Termination.resx">
+      <DependentUpon>Termination.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -68,6 +74,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Unification.resx">
+      <DependentUpon>Unification.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -85,6 +94,10 @@
     <ProjectReference Include="..\TermRewritingV2\TermRewritingV2.csproj">
       <Project>{8b16a3d4-1b0a-4380-89f0-d89e6d4dc729}</Project>
       <Name>TermRewritingV2</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TermRewritingV3\TermRewritingV3.csproj">
+      <Project>{ef40a28a-d84f-4798-90fc-03544dc0c7d8}</Project>
+      <Name>TermRewritingV3</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -6,8 +6,6 @@ namespace TermRewritingV2
 {
     public class Term
     {
-        private static int counter = 0;
-        private readonly int id = counter++;
         private Term _parent;
         private IReadOnlyCollection<Definition> _signatures;
 
@@ -17,9 +15,11 @@ namespace TermRewritingV2
 
         public Term this[string pos] => Position(pos);
 
-        public int Size => Positions().Count;
+        public int Size => Positions.Count;
 
         public bool IsVariable => Definition.IsVariable;
+
+        public string RootSymbol => Definition.Name;
 
         public void Replace(string position, Term term)
         {
@@ -37,7 +37,7 @@ namespace TermRewritingV2
             var target = Root(this).Variables.FirstOrDefault(v => v.Name == variableName);
             if (target == null)
                 return false;
-            var targetPositions = Positions().Values.Where(x => x.Definition.Name == target.Name);
+            var targetPositions = Positions.Values.Where(x => x.Definition.Name == target.Name).ToList();
 
             foreach (var position in targetPositions)
             {
@@ -47,8 +47,43 @@ namespace TermRewritingV2
             return targetPositions.Any();
         }
 
-        public Dictionary<string, Term> Positions()
+        public Dictionary<string, Term> Positions
             => PositionsInner().ToDictionary(x => x.Item1, x => x.Item2);
+
+        public List<Definition> Variables
+            => Flatten(this)
+                .Where(x => x.Definition.Type == TermType.Variable)
+                .Select(x => x.Definition)
+                .GroupBy(x => x.Name)
+                .Select(g => g.First())
+                .ToList();
+
+        public static Term Clone(Term other)
+            => Parse(other._signatures, other.ToString());
+
+        public static Term Parse(IReadOnlyCollection<Definition> signature, string input)
+            => Parse(signature, new[] { input }).FirstOrDefault();
+
+        public Term Substitute(List<Pair> substitutions)
+        {
+            var result = Clone(this);
+            var targets = result.Positions.Where(x => x.Value.IsVariable)
+                .Join(substitutions,
+                    pos => pos.Value.Definition.Name,
+                    sub => sub.Left.Definition.Name,
+                    (pos, sub) => (pos, sub));
+
+            foreach (var (pos, sub) in targets)
+            {
+                result.Replace(pos.Key, sub.Right);
+            }
+
+            return result;
+        }
+
+
+        public static List<Term> Parse(IReadOnlyCollection<Definition> signature, params string[] inputs)
+            => inputs.Select(x => Parse(x, signature, new List<Definition>())).ToList();
 
         public override string ToString()
             => $"{Definition.Name}{(Children.Count > 0 ? $"({string.Join(", ", Children.Select(x => x.ToString()))})" : string.Empty)}";
@@ -57,19 +92,19 @@ namespace TermRewritingV2
         {
             context = context ?? new List<Definition>();
 
-            if (IsVariable)
-            {
-                var index = context.IndexOf(Definition) + 1;
-                if (index == 0)
-                {
-                    context.Add(Definition);
-                    index = context.Count;
-                }
+            if (!IsVariable)
+                return $"{Definition.Name}" +
+                       $"{(Children.Count > 0 ? $"({string.Join(", ", Children.Select(x => x.Representation(context)))}" : string.Empty)})";
 
-                return new string(Enumerable.Repeat('#', index).ToArray());
+            var index = context.IndexOf(Definition) + 1;
+            if (index == 0)
+            {
+                context.Add(Definition);
+                index = context.Count;
             }
 
-            return $"{Definition.Name}{(Children.Count > 0 ? $"({string.Join(", ", Children.Select(x => x.Representation(context)))}" : string.Empty)})";
+            return new string(Enumerable.Repeat('#', index).ToArray());
+
         }
 
         private void AssignFrom(Term term)
@@ -81,14 +116,6 @@ namespace TermRewritingV2
             Children.ForEach(c => c._parent = this);
             Definition = newTerm.Definition;
         }
-
-        public List<Definition> Variables
-            => Flatten(this)
-                .Where(x => x.Definition.Type == TermType.Variable)
-                .Select(x => x.Definition)
-                .GroupBy(x => x.Name)
-                .Select(g => g.First())
-                .ToList();
 
         private static Term Root(Term child)
             => child._parent == null ? child : Root(child._parent);
@@ -110,20 +137,6 @@ namespace TermRewritingV2
 
         private ICollection<(string, Term)> PositionsInner(string start = "")
             => new[] { (start, this) }.Concat(Children.SelectMany((c, i) => c.PositionsInner($"{start}{i + 1}"))).ToList();
-
-        public static Term Clone(Term other)
-            => Parse(other._signatures, other.ToString());
-
-        public static Term Parse(IReadOnlyCollection<Definition> signature, string input)
-        {
-            return Parse(signature, new[] { input }).FirstOrDefault();
-        }
-
-        public static List<Term> Parse(IReadOnlyCollection<Definition> signature, params string[] inputs)
-        {
-            var context = new List<Definition>();
-            return inputs.Select(x => Parse(x, signature, context)).ToList();
-        }
 
         private static Term Parse(string input, IReadOnlyCollection<Definition> signature, ICollection<Definition> variables)
         {
@@ -261,6 +274,5 @@ namespace TermRewritingV2
         }
 
         public static bool operator !=(Term t1, Term t2) => !(t1 == t2);
-
     }
 }

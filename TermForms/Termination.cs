@@ -8,14 +8,15 @@ using static TermRewritingV2.HistoryLog;
 
 namespace TermForms
 {
-    public partial class Form1 : Form
+    public partial class Termination : Form
     {
         private RewriteSystem _system;
         private Term _selection;
-        public Form1()
+        public Termination()
         {
             InitializeComponent();
-            SignaturesInput.Text = "f/2;i/1;e/0";
+            //SignaturesInput.Text = "f/2;i/1;e/0";
+            SignaturesInput.Text = "f/2;g/2;a/0;b/0;ap/0;bp/0";
             //SignaturesInput.Text = "f/2;h/2;c/0;";
             TermInput.Text = "f(x, f(y, z))";
         }
@@ -41,7 +42,7 @@ namespace TermForms
             _selection = term;
             tree.BeginUpdate();
             tree.Nodes.Clear();
-            tree.Nodes.Add(Transform(term, term.Positions()));
+            tree.Nodes.Add(Transform(term, term.Positions));
             tree.EndUpdate();
         }
 
